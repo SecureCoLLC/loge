@@ -9,7 +9,7 @@ import (
 )
 
 const dateTimeStringLength = 27
-const maxFileSize = 500
+const maxFileSize = 5368709120
 
 func getLogName(path string) string {
 	fileList, _ := os.ReadDir(path)
