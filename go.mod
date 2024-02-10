@@ -1,4 +1,4 @@
-module github.com/securecollc/loge
+module github.com/SecureCoLLC/loge
 
 go 1.12
 
