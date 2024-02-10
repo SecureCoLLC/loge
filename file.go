@@ -4,8 +4,12 @@ import (
 	"bufio"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
+	"syscall"
 )
+
+const storageThreshold = 0.9
 
 type fileOutputTransport struct {
 	buffer          TransactionList
@@ -75,9 +79,37 @@ func (ft *fileOutputTransport) Stop() {
 	ft.wg.Wait()
 }
 
+func getStoragePercent() float64 {
+	// Returns a float64 between 0 and 1 representing the percent of disk space taken up
+	var fileSystemStats syscall.Statfs_t
+	if err := syscall.Statfs("/", &fileSystemStats); err != nil {
+		return -1
+	}
+
+	totalBytes := float64(fileSystemStats.Blocks * uint64(fileSystemStats.Bsize))
+	usedBytes := float64((fileSystemStats.Blocks - fileSystemStats.Bavail) * uint64(fileSystemStats.Bsize))
+
+	percentUsage := (usedBytes / totalBytes)
+	return percentUsage
+}
+
 func (ft *fileOutputTransport) flushAll() {
 	if ft.terminated {
 		return
+	}
+
+	if getStoragePercent() > storageThreshold {
+		fileList, _ := os.ReadDir(ft.path)
+		if len(fileList) >= 1 {
+			sort.Slice(fileList,
+				func(x int, y int) bool {
+					return fileList[x].Name() > fileList[y].Name() // Reverse sort
+				})
+			for getStoragePercent() > storageThreshold && len(fileList) >= 1 {
+				os.Remove(fileList[0].Name())
+				fileList = fileList[1:]
+			}
+		}
 	}
 
 	if ft.file != nil {
