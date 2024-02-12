@@ -80,6 +80,16 @@ func (ft *fileOutputTransport) Stop() {
 }
 
 func getStoragePercent() float64 {
+	// TODO: Windows code
+	// import "golang.org/x/sys/windows"
+
+	// var freeBytesAvailable uint64
+	// var totalNumberOfBytes uint64
+	// var totalNumberOfFreeBytes uint64
+
+	// err := windows.GetDiskFreeSpaceEx(windows.StringToUTF16Ptr("C:"),
+	//     &freeBytesAvailable, &totalNumberOfBytes, &totalNumberOfFreeBytes)
+
 	// Returns a float64 between 0 and 1 representing the percent of disk space taken up
 	var fileSystemStats syscall.Statfs_t
 	if err := syscall.Statfs("/", &fileSystemStats); err != nil {
