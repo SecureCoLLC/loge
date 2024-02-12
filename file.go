@@ -79,7 +79,7 @@ func (ft *fileOutputTransport) Stop() {
 	ft.wg.Wait()
 }
 
-func getStoragePercent() float64 {
+func getStoragePercent(logDir string) float64 {
 	// TODO: Windows code
 	// import "golang.org/x/sys/windows"
 
@@ -92,7 +92,7 @@ func getStoragePercent() float64 {
 
 	// Returns a float64 between 0 and 1 representing the percent of disk space taken up
 	var fileSystemStats syscall.Statfs_t
-	if err := syscall.Statfs("/", &fileSystemStats); err != nil {
+	if err := syscall.Statfs(logDir, &fileSystemStats); err != nil {
 		return -1
 	}
 
@@ -108,14 +108,14 @@ func (ft *fileOutputTransport) flushAll() {
 		return
 	}
 
-	if getStoragePercent() > storageThreshold {
+	if len(ft.currentFilename) > 0 && getStoragePercent(ft.currentFilename) > storageThreshold {
 		fileList, _ := os.ReadDir(ft.path)
 		if len(fileList) >= 1 {
 			sort.Slice(fileList,
 				func(x int, y int) bool {
 					return fileList[x].Name() > fileList[y].Name() // Reverse sort
 				})
-			for getStoragePercent() > storageThreshold && len(fileList) >= 1 {
+			for getStoragePercent(ft.currentFilename) > storageThreshold && len(fileList) >= 1 {
 				os.Remove(fileList[0].Name())
 				fileList = fileList[1:]
 			}
