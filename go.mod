@@ -1,4 +1,4 @@
-module github.com/potakhov/loge
+module github.com/securecollc/loge
 
 go 1.12
 
