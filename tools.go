@@ -2,15 +2,40 @@ package loge
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"time"
 )
 
 const dateTimeStringLength = 27
 
+const maxFileSize = 1
+
 func getLogName(path string) string {
 	t := time.Now()
-	ret := fmt.Sprintf("%d%02d%02d.log", t.Year(), t.Month(), t.Day())
+	ret := fmt.Sprintf("%d%02d%02d_", t.Year(), t.Month(), t.Day())
+	fileNum := 0
+	for fileNum <= 9999 {
+		tempPath := filepath.Join(path, ret + fmt.Sprintf("%04d.log", fileNum))
+		_, err := os.Stat(tempPath)
+		if err != nil {
+			break
+		}
+		fileNum += 1
+	}
+	prevFileNum := fileNum - 1
+	if prevFileNum >= 0 {
+		tempPath := filepath.Join(path, ret + fmt.Sprintf("%04d.log", prevFileNum))
+		fi, _ := os.Stat(tempPath)
+		if fi.Size() < maxFileSize {
+			fileNum = prevFileNum
+		}
+	}
+
+	if fileNum > 9999 {
+		//idk man
+	}
+	ret += fmt.Sprintf("%04d.log", fileNum)
 	return filepath.Join(path, ret)
 }
 
