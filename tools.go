@@ -30,7 +30,7 @@ func getLogName(path string) string {
 	
 	lastFileName := fileList[len(fileList) - 1].Name()
 	lastNum, _ := strconv.Atoi(lastFileName[9:13])
-	fileNum = lastNum + 1
+	fileNum = lastNum
 
 	pathToFile := filepath.Join(path, ret + fmt.Sprintf("%04d.log", fileNum))
 	fi, err := os.Stat(pathToFile)
