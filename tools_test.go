@@ -1,10 +1,11 @@
 package loge
 
-// import(
-// 	"fmt"
-// 	"testing"
-// )
+import(
+	"fmt"
+	"testing"
+)
 
-// func TestLogName(t *testing.T) {
-// 	fmt.Println(getLogName("./logs"))
-// }
+func TestLogName(t *testing.T) {
+	fmt.Println("Testing getLogName")
+	fmt.Println(getLogName("./logs"))
+}

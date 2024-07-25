@@ -4,31 +4,39 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
+	"strconv"
 	"time"
 )
 
 const dateTimeStringLength = 27
 
-const maxFileSize = 5000000000
+const maxFileSize = 1//5000000000
 
 func getLogName(path string) string {
 	t := time.Now()
 	ret := fmt.Sprintf("%d%02d%02d_", t.Year(), t.Month(), t.Day())
+	fileList, _ := os.ReadDir(path)
+	sort.Slice(fileList,
+		func (x int, y int) bool {
+			return fileList[x].Name() < fileList[y].Name()
+		})
+
 	fileNum := 0
-	for fileNum <= 9999 {
-		tempPath := filepath.Join(path, ret + fmt.Sprintf("%04d.log", fileNum))
-		_, err := os.Stat(tempPath)
-		if err != nil {
-			break
-		}
-		fileNum += 1
+
+	if len(fileList) == 0 {
+		return filepath.Join(path, ret + fmt.Sprintf("%04d.log", fileNum))
 	}
-	prevFileNum := fileNum - 1
-	if prevFileNum >= 0 {
-		tempPath := filepath.Join(path, ret + fmt.Sprintf("%04d.log", prevFileNum))
-		fi, _ := os.Stat(tempPath)
-		if fi.Size() < maxFileSize {
-			fileNum = prevFileNum
+	
+	lastFileName := fileList[len(fileList) - 1].Name()
+	lastNum, _ := strconv.Atoi(lastFileName[9:13])
+	fileNum = lastNum + 1
+
+	pathToFile := filepath.Join(path, ret + fmt.Sprintf("%04d.log", fileNum))
+	fi, err := os.Stat(pathToFile)
+	if err == nil {
+		if fi.Size() > maxFileSize {
+			fileNum += 1
 		}
 	}
 

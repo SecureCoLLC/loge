@@ -8,11 +8,12 @@ import(
 )
 
 func TestStoragePercent(t *testing.T) {
+	fmt.Println("Testing getStoragePercent")
 	fmt.Println(getStoragePercent("."))
 }
 
 func TestFlushAll(t *testing.T) {
-	fmt.Println("Testing flush")
+	fmt.Println("Testing flushAll")
 
 	ft := newFileTransport(nil, "./logs", "", true, false)
 	ft.flushAll()
