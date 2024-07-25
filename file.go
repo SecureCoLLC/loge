@@ -9,7 +9,7 @@ import (
 	"syscall"
 )
 
-const storageThreshold = 0.9
+const storageThreshold = 0.0
 
 type fileOutputTransport struct {
 	buffer          TransactionList
