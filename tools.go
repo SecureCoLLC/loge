@@ -11,7 +11,7 @@ import (
 
 const dateTimeStringLength = 27
 
-const maxFileSize = 1//5000000000
+const maxFileSize = 5000000000
 
 func getLogName(path string) string {
 	t := time.Now()
