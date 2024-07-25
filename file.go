@@ -4,9 +4,12 @@ import (
 	"bufio"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
 	"syscall"
 )
+
+const storageThreshold = 0.5
 
 type fileOutputTransport struct {
 	buffer          TransactionList
@@ -81,6 +84,16 @@ func (ft *fileOutputTransport) flushAll() {
 		return
 	}
 
+	fileList, _ := os.ReadDir(ft.path)
+	sort.Slice(fileList,
+		func (x int, y int) bool {
+			return fileList[x].Name() > fileList[y].Name()
+		})
+	for getStoragePercent(ft.path) > storageThreshold && len(fileList) >= 1 {
+		os.Remove(filepath.Join(ft.path, fileList[0].Name()))
+		fileList = fileList[1:]
+	}
+	
 	if ft.file != nil {
 		if ft.rotation {
 			if ft.currentFilename != getLogName(ft.path) {
