@@ -13,38 +13,62 @@ const dateTimeStringLength = 27
 
 const maxFileSize = 10 * 1024 * 1024
 
-func getLogName(path string) string {
+func getLogName(path string) (string, error) {
 	t := time.Now()
 	ret := fmt.Sprintf("%d%02d%02d_", t.Year(), t.Month(), t.Day())
-	fileList, _ := os.ReadDir(path)
+	fileDirList, _ := os.ReadDir(path)
+
+	fileList := make([]string, 0)
+	for _, file := range fileDirList {
+		if len(file.Name()) == 17 && file.Name()[len(file.Name())-4:] == ".log" {
+			fileList = append(fileList, filepath.Join(path, file.Name()))
+		}
+	}
 	sort.Slice(fileList,
-		func (x int, y int) bool {
-			return fileList[x].Name() < fileList[y].Name()
+		func(x int, y int) bool {
+			f1, err1 := os.Stat(fileList[x])
+			f2, err2 := os.Stat(fileList[y])
+			if err1 != nil || err2 != nil {
+				return true
+			}
+			return f1.ModTime().Before(f2.ModTime())
 		})
 
-	fileNum := 0
-
 	if len(fileList) == 0 {
-		return filepath.Join(path, ret + fmt.Sprintf("%04d.log", fileNum))
+		ret += fmt.Sprintf("%04d.log", 0)
+		return filepath.Join(path, ret), nil
 	}
-	
-	lastFileName := fileList[len(fileList) - 1].Name()
-	lastNum, _ := strconv.Atoi(lastFileName[9:13])
-	fileNum = lastNum
 
-	pathToFile := filepath.Join(path, ret + fmt.Sprintf("%04d.log", fileNum))
+	fileNum := 0
+	recentFile := fileList[len(fileList)-1]
+	newNum, err := strconv.Atoi(recentFile[len(recentFile)-8 : len(recentFile)-4])
+	if err == nil {
+		fileNum = newNum
+	}
+
+	pathToFile := filepath.Join(path, ret+fmt.Sprintf("%04d.log", fileNum))
 	fi, err := os.Stat(pathToFile)
 	if err == nil {
 		if fi.Size() > maxFileSize {
 			fileNum += 1
 		}
+	} else {
+		return "", err
 	}
 
+	delNum := fileNum + 1
 	if fileNum > 9999 {
-		//idk man
+		delNum = 0
+		fileNum = 0
+	}
+	delFile := ret + fmt.Sprintf("%04d.log", delNum)
+	delPath := filepath.Join(path, delFile)
+	_, delErr := os.Stat(delPath)
+	if delErr != nil {
+		os.Remove(delPath)
 	}
 	ret += fmt.Sprintf("%04d.log", fileNum)
-	return filepath.Join(path, ret)
+	return filepath.Join(path, ret), nil
 }
 
 func itoa(buf *[]byte, i int, wid int) {
