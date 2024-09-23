@@ -1,6 +1,6 @@
 package loge
 
-import(
+import (
 	"fmt"
 	"testing"
 )

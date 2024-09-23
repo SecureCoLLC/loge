@@ -1,10 +1,10 @@
 package loge
 
-import(
+import (
 	"fmt"
+	"os"
+	"sort"
 	"testing"
-	//"sort"
-	//"os"
 )
 
 func TestStoragePercent(t *testing.T) {
@@ -17,17 +17,13 @@ func TestFlushAll(t *testing.T) {
 
 	ft := newFileTransport(nil, "./logs", "", true, false)
 	ft.flushAll()
-	
-	/*storageThreshold := 0.0
-	ft := struct {
-		path string
-	}{
-		path: "./logs",
-	}
-	
+
+	storageThreshold := 0.0
+	ft.path = "./logs"
+
 	fileList, _ := os.ReadDir(ft.path)
 	sort.Slice(fileList,
-		func (x int, y int) bool {
+		func(x int, y int) bool {
 			return fileList[x].Name() > fileList[y].Name()
 		})
 	fmt.Println(fileList)
@@ -37,5 +33,5 @@ func TestFlushAll(t *testing.T) {
 		fmt.Println(fileList[0].Name())
 		os.Remove(ft.path + "/" + fileList[0].Name())
 		fileList = fileList[1:]
-	}*/	
+	}
 }
