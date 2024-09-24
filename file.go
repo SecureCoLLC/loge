@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"sort"
 	"sync"
-	"syscall"
 )
 
 const storageThreshold = 0.9
@@ -103,6 +102,8 @@ func (ft *fileOutputTransport) flushAll() error {
 		if ft.rotation {
 			logName, err := getLogName(ft.path)
 			if err != nil {
+				ft.terminated = true
+				os.Stderr.Write([]byte("Unable to get output file name.  Log file output is disabled.\n"))
 				return err
 			}
 			if ft.currentFilename != logName {
@@ -175,28 +176,4 @@ func (ft *fileOutputTransport) createFile() error {
 
 	ft.writer = bufio.NewWriter(ft.file)
 	return nil
-}
-
-func getStoragePercent(logDir string) float64 {
-	// TODO: Windows code
-	// import "golang.org/x/sys/windows"
-
-	// var freeBytesAvailable uint64
-	// var totalNumberOfBytes uint64
-	// var totalNumberOfFreeBytes uint64
-
-	// err := windows.GetDiskFreeSpaceEx(windows.StringToUTF16Ptr("C:"),
-	//     &freeBytesAvailable, &totalNumberOfBytes, &totalNumberOfFreeBytes)
-
-	// Returns a float64 between 0 and 1 representing the percent of disk space taken up
-	var fileSystemStats syscall.Statfs_t
-	if err := syscall.Statfs(logDir, &fileSystemStats); err != nil {
-		return -1
-	}
-
-	totalBytes := float64(fileSystemStats.Blocks * uint64(fileSystemStats.Bsize))
-	usedBytes := float64((fileSystemStats.Blocks - fileSystemStats.Bavail) * uint64(fileSystemStats.Bsize))
-
-	percentUsage := (usedBytes / totalBytes)
-	return percentUsage
 }
