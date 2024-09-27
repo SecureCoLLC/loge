@@ -88,8 +88,12 @@ func (ft *fileOutputTransport) flushAll() error {
 		func(x int, y int) bool {
 			f1, err1 := os.Stat(fileList[x].Name())
 			f2, err2 := os.Stat(fileList[y].Name())
-			if err1 != nil || err2 != nil {
+			if err1 != nil && err2 != nil {
 				return false
+			} else if err1 != nil {
+				return false
+			} else if err2 != nil {
+				return true
 			}
 			return f1.ModTime().Before(f2.ModTime())
 		})
