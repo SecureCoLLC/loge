@@ -4,8 +4,11 @@ import (
 	"bufio"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
 )
+
+const storageThreshold = 0.9
 
 type fileOutputTransport struct {
 	buffer          TransactionList
@@ -75,14 +78,39 @@ func (ft *fileOutputTransport) Stop() {
 	ft.wg.Wait()
 }
 
-func (ft *fileOutputTransport) flushAll() {
+func (ft *fileOutputTransport) flushAll() error {
 	if ft.terminated {
-		return
+		return nil
+	}
+
+	fileList, _ := os.ReadDir(ft.path)
+	sort.Slice(fileList,
+		func(x int, y int) bool {
+			f1, err1 := os.Stat(fileList[x].Name())
+			f2, err2 := os.Stat(fileList[y].Name())
+			if err1 != nil && err2 != nil {
+				return false
+			} else if err1 != nil {
+				return false
+			} else if err2 != nil {
+				return true
+			}
+			return f1.ModTime().Before(f2.ModTime())
+		})
+	for getStoragePercent(ft.path) > storageThreshold && len(fileList) >= 1 {
+		os.Remove(filepath.Join(ft.path, fileList[0].Name()))
+		fileList = fileList[1:]
 	}
 
 	if ft.file != nil {
 		if ft.rotation {
-			if ft.currentFilename != getLogName(ft.path) {
+			logName, err := getLogName(ft.path)
+			if err != nil {
+				ft.terminated = true
+				os.Stderr.Write([]byte("Unable to get output file name.  Log file output is disabled.\n"))
+				return err
+			}
+			if ft.currentFilename != logName {
 				ft.file.Close()
 				ft.file = nil
 				ft.writer = nil
@@ -95,14 +123,14 @@ func (ft *fileOutputTransport) flushAll() {
 		if ft.file == nil {
 			ft.terminated = true
 			os.Stderr.Write([]byte("Unable to create the output file.  Log file output is disabled.\n"))
-			return
+			return nil
 		}
 	}
 
 	ft.transLocker.Lock()
 	if len(ft.trans) == 0 {
 		ft.transLocker.Unlock()
-		return
+		return nil
 	}
 
 	ids := ft.trans
@@ -129,11 +157,16 @@ func (ft *fileOutputTransport) flushAll() {
 	}
 
 	ft.writer.Flush()
+	return nil
 }
 
-func (ft *fileOutputTransport) createFile() {
+func (ft *fileOutputTransport) createFile() error {
 	if ft.rotation {
-		ft.currentFilename = getLogName(ft.path)
+		logName, err := getLogName(ft.path)
+		if err != nil {
+			return err
+		}
+		ft.currentFilename = logName
 	} else {
 		ft.currentFilename = filepath.Join(ft.path, ft.filename)
 	}
@@ -142,8 +175,9 @@ func (ft *fileOutputTransport) createFile() {
 	ft.file, err = os.OpenFile(ft.currentFilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		ft.file = nil
-		return
+		return nil
 	}
 
 	ft.writer = bufio.NewWriter(ft.file)
+	return nil
 }
