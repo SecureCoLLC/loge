@@ -24,15 +24,17 @@ func getLogName(path string) (string, error) {
 			fileList = append(fileList, filepath.Join(path, file.Name()))
 		}
 	}
-	sort.Slice(fileList,
-		func(x int, y int) bool {
-			f1, err1 := os.Stat(fileList[x])
-			f2, err2 := os.Stat(fileList[y])
-			if err1 != nil || err2 != nil {
-				return true
-			}
-			return f1.ModTime().Before(f2.ModTime())
-		})
+	if len(fileList) > 1 {
+		sort.Slice(fileList,
+			func(x int, y int) bool {
+				f1, err1 := os.Stat(fileList[x])
+				f2, err2 := os.Stat(fileList[y])
+				if err1 != nil || err2 != nil {
+					return true
+				}
+				return f1.ModTime().Before(f2.ModTime())
+			})
+	}
 
 	if len(fileList) == 0 {
 		ret += fmt.Sprintf("%04d.log", 0)
