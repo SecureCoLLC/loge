@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -34,6 +35,10 @@ func getLogName(path string) (string, error) {
 				}
 				return f1.ModTime().Before(f2.ModTime())
 			})
+	}
+
+	for !strings.Contains(fileList[0], ret) && len(fileList) >= 1 {
+		fileList = fileList[1:]
 	}
 
 	if len(fileList) == 0 {
