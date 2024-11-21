@@ -37,7 +37,7 @@ func getLogName(path string) (string, error) {
 			})
 	}
 
-	for !strings.Contains(fileList[0], ret) && len(fileList) >= 1 {
+	for len(fileList) >= 1 && !strings.Contains(fileList[0], ret) {
 		fileList = fileList[1:]
 	}
 
